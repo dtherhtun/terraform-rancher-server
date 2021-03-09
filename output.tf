@@ -1,48 +1,15 @@
-output "master_addresses" {
-  value       = aws_instance.rancher_master.*.public_ip
-  description = "IP addresses of Rancher master nodes"
-}
-
-output "worker_addresses" {
-  value       = aws_instance.rancher_worker.*.public_ip
-  description = "IP addresses of Rancher worker nodes"
-}
-
-output "rancher_admin_password" {
-  value       = var.rancher_password
-  sensitive   = true
-  description = "Password set for Rancher local admin user"
-}
+# Outputs
 
 output "rancher_url" {
-  value       = rancher2_bootstrap.admin.url
-  description = "URL at which to reach Rancher"
+  value = "https://${var.rancher_server_dns}"
 }
 
-output "rancher_api_url" {
-  value       = local.api_server_url
-  description = "FQDN of Rancher's Kubernetes API endpoint"
+output "custom_cluster_command" {
+  value       = rancher2_cluster.quickstart_workload.cluster_registration_token.0.node_command
+  description = "Docker command used to add a node to the quickstart cluster"
 }
 
-output "rancher_token" {
-  value       = rancher2_bootstrap.admin.token
-  sensitive   = true
-  description = "Admin token for Rancher cluster use"
-}
-
-output "etcd_backup_s3_bucket_id" {
-  value       = aws_s3_bucket.etcd_backups.id
-  description = "S3 bucket ID for etcd backups"
-}
-
-output "etcd_backup_user_key" {
-  value       = aws_iam_access_key.etcd_backup_user.id
-  sensitive   = true
-  description = "AWS IAM access key id for etcd backup user"
-}
-
-output "etcd_backup_user_secret" {
-  value       = aws_iam_access_key.etcd_backup_user.secret
-  sensitive   = true
-  description = "AWS IAM secret access key for etcd backup user"
+output "custom_cluster_windows_command" {
+  value       = rancher2_cluster.quickstart_workload.cluster_registration_token.0.windows_node_command
+  description = "Docker command used to add a windows node to the quickstart cluster"
 }

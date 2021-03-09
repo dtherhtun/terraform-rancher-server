@@ -1,213 +1,84 @@
-variable "rancher_password" {
+# Variables for rancher common module
+
+# Required
+variable "node_public_ip" {
   type        = string
-  description = "Password to set for Rancher root user"
+  description = "Public IP of compute node for Rancher cluster"
 }
 
-variable "rancher_current_password" {
+variable "node_internal_ip" {
   type        = string
-  default     = null
-  description = "Rancher admin user current password"
+  description = "Internal IP of compute node for Rancher cluster"
+  default     = ""
+}
+
+# Required
+variable "node_username" {
+  type        = string
+  description = "Username used for SSH access to the Rancher server cluster node"
+}
+
+# Required
+variable "ssh_private_key_pem" {
+  type        = string
+  description = "Private key used for SSH access to the Rancher server cluster node"
+}
+
+variable "rke_kubernetes_version" {
+  type        = string
+  description = "Kubernetes version to use for Rancher server RKE cluster"
+  default     = "v1.19.4-rancher1-1"
+}
+
+variable "cert_manager_version" {
+  type        = string
+  description = "Version of cert-manager to install alongside Rancher (format: 0.0.0)"
+  default     = "1.0.4"
 }
 
 variable "rancher_version" {
   type        = string
-  default     = "2.2.9"
-  description = "Version of Rancher to install"
+  description = "Rancher server version (format v0.0.0)"
+  default     = "v2.5.3"
 }
 
-variable "rancher2_master_custom_tags" {
-  type        = map(any)
-  default     = {}
-  description = "Custom tags for Rancher master nodes"
-}
-
-variable "rancher2_worker_custom_tags" {
-  type        = map(any)
-  default     = {}
-  description = "Custom tags for Rancher worker nodes"
-}
-
-variable "rancher2_custom_tags" {
-  type = map(any)
-  default = {
-    DoNotDelete = "true"
-    Owner       = "EIO_Demo"
-  }
-  description = "Custom tags for Rancher resources"
-}
-
-variable "extra_ssh_keys" {
-  type        = list(any)
-  default     = []
-  description = "Extra ssh keys to inject into Rancher instances"
-}
-
-variable "rancher_chart" {
+# Required
+variable "rancher_server_dns" {
   type        = string
-  default     = "rancher-stable/rancher"
-  description = "Helm chart to use for Rancher install"
+  description = "DNS host name of the Rancher server"
 }
 
-variable "certmanager_chart" {
+# Required
+variable "admin_password" {
   type        = string
-  default     = "jetstack/cert-manager"
-  description = "Helm chart to use for cert-manager install"
+  description = "Admin password to use for Rancher server bootstrap"
 }
 
-variable "name" {
+variable "workload_kubernetes_version" {
   type        = string
-  default     = "rancher-demo"
-  description = "Name for deployment"
+  description = "Kubernetes version to use for managed workload cluster"
+  default     = "v1.18.12-rancher1-1"
 }
 
-variable "github_client_id" {
+# Required
+variable "workload_cluster_name" {
   type        = string
-  default     = ""
-  description = "GitHub client ID for Rancher to use, if using GH auth"
+  description = "Name for created custom workload cluster"
 }
 
-variable "github_client_secret" {
+variable "rke_network_plugin" {
   type        = string
-  default     = ""
-  description = "GitHub client secret for Rancher to use, if using GH auth"
+  description = "Network plugin used for the custom workload cluster"
+  default     = "canal"
 }
 
-variable "le_email" {
-  type        = string
-  default     = "none@none.com"
-  description = "LetsEncrypt email address to use"
-}
-
-variable "domain" {
-  type    = string
-  default = "eng.rancher.space"
-}
-
-variable "r53_domain" {
-  type        = string
-  default     = ""
-  description = "DNS domain for Route53 zone (defaults to domain if unset)"
-}
-
-variable "instance_type" {
-  type    = string
-  default = "t3.large"
-}
-
-variable "master_node_count" {
-  type        = number
-  default     = 3
-  description = "Number of master nodes to launch"
-}
-
-variable "worker_node_count" {
-  type        = number
-  default     = 3
-  description = "Number of worker nodes to launch"
-}
-
-variable "rancher_nodes_in_asgs" {
-  type        = bool
-  default     = true
-  description = "Control whether to put Rancher nodes in ASGs"
-}
-
-variable "instance_ssh_user" {
-  type        = string
-  default     = "ubuntu"
-  description = "Username for sshing into instances"
-}
-
-variable "certmanager_version" {
-  type        = string
-  default     = "0.10.0"
-  description = "Version of cert-manager to install"
-}
-
-variable "rancher2_github_auth_enabled" {
-  type        = bool
-  default     = false
-  description = "Whether to use GitHub authentication for Rancher"
-}
-
-variable "rancher2_github_auth_user" {
-  type        = string
-  default     = "3430214"
-  description = "GitHub numerical ID of user to grant Rancher access to"
-}
-
-variable "rancher2_github_auth_org" {
-  type        = string
-  default     = "53273206"
-  description = "GitHub numerical ID of organization to grant Rancher access to"
-}
-
-variable "rancher2_github_auth_team" {
-  type        = string
-  default     = "3414845"
-  description = "GitHub numerical ID of team to grant Rancher access to"
-}
-
-variable "rancher2_extra_allowed_gh_principals" {
-  type        = list(any)
-  default     = []
-  description = "List of principals in form github_user://IDNUM to be given Rancher access"
-}
-
-variable "rancher2_master_subnet_ids" {
-  type        = list(any)
-  default     = []
-  description = "List of subnet ids for Rancher master nodes"
-}
-
-variable "rancher2_worker_subnet_ids" {
-  type        = list(any)
-  default     = []
-  description = "List of subnet ids for Rancher worker nodes"
-}
-
-variable "use_default_vpc" {
-  type        = bool
-  default     = true
-  description = "Should the default VPC for the region selected be used for Rancher"
-}
-
-variable "vpc_id" {
-  type        = string
+variable "rke_network_options" {
+  description = "Network options used for the custom workload cluster"
   default     = null
-  description = "If use_default_vpc is false, the vpc id that Rancher should use"
 }
 
-variable "aws_elb_subnet_ids" {
-  type        = list(any)
-  default     = []
-  description = "List of subnet ids in which to place the AWS ELB"
-}
-
-variable "rke_backups_region" {
-  type        = string
-  default     = ""
-  description = "Region to perform backups to S3 in. Defaults to aws_region"
-}
-
-variable "rke_backups_s3_endpoint" {
-  type        = string
-  default     = ""
-  description = "Override for S3 endpoint to use for backups"
-}
-
-variable "aws_region" {
-  type    = string
-  default = "us-west-2"
-}
-
-variable "aws_profile" {
-  type    = string
-  default = "rancher-eng"
-}
-
-variable "creds_output_path" {
-  description = "Where to save the id_rsa config file. Should end in a forward slash `/` ."
-  type        = string
-  default     = "./"
+variable "windows_prefered_cluster" {
+  type        = bool
+  description = "Activate windows supports for the custom workload cluster"
+  default     = false
 }

@@ -1,34 +1,72 @@
-# Rancher server Terraform module
+# Rancher Common Terraform Module
 
-Terraform module which creates servers to host Rancher and installs Rancher on them.
+The `rancher-common` module contains all resources that do not depend on a
+specific cloud provider. RKE, Kubernetes, Helm, and Rancher providers are used
+given the necessary information about the infrastructure created in a cloud
+provider.
 
-To use this module, you must [install the RKE provider](https://github.com/yamamoto-febc/terraform-provider-rke#installation).
+## Variables
 
-## Terraform versions
+###### `node_public_ip`
+- **Required**
+Public IP of compute node for Rancher cluster
 
-Terraform 0.12
+###### `node_internal_ip`
+- Default: **`""`**
+Internal IP of compute node for Rancher cluster
 
-## Usage
+###### `node_username`
+- **Required**
+Username used for SSH access to the Rancher server cluster node
 
-```hcl
-module "rancher_server" {
-  rancher_password           = var.rancher_password
-  use_default_vpc            = false
-  vpc_id                     = "vpc-foobar"
-  aws_region                 = "us-east-1"
-  aws_profile                = null
-  aws_elb_subnet_ids         = ["subnet-1", "subnet-2"]
-  domain                     = "foo.domain"
-  r53_domain                 = "rancher.foo.domain"
-  rancher2_master_subnet_ids = ["subnet-1", "subnet-2"]
-  rancher2_worker_subnet_ids = ["subnet-1", "subnet-2"]
+###### `ssh_private_key_pem`
+- **Required**
+Private key used for SSH access to the Rancher server cluster node
 
-  providers = {
-    aws     = "aws"
-    aws.r53 = "aws.r53"
-  }
-}
-```
+Expected to be in PEM format.
+
+###### `rke_kubernetes_version`
+- Default: **`"v1.19.4-rancher1-1"`**
+Kubernetes version to use for Rancher server RKE cluster
+
+###### `cert_manager_version`
+- Default: **`"1.0.4"`**
+Version of cert-manager to install alongside Rancher (format: `0.0.0`)
+
+Available versions are found in `files/cert-manager`, where a supported version
+is indicated by the presence of `crds-${var.cert_manager_version}.yaml`.
+
+###### `rancher_version`
+- Default: **`"v2.5.3"`**
+Rancher server version (format `v0.0.0`)
+
+###### `rancher_server_dns`
+- **Required**
+DNS host name of the Rancher server
+
+A DNS name is required to allow successful SSL cert generation.
+SSL certs may only be assigned to DNS names, not IP addresses.
+Only an IP address could cause the Custom cluster to fail due to mismatching SSL
+Subject Names.
+
+###### `admin_password`
+- **Required**
+Admin password to use for Rancher server bootstrap
+
+Log in to the Rancher server using username `admin` and this password.
+
+###### `workload_kubernetes_version`
+- Default: **`"v1.18.12-rancher1-1"`**
+Kubernetes version to use for managed workload cluster
+
+Defaulted to one version behind most recent minor release to allow experimenting
+with upgrading Kubernetes versions.
+
+###### `workload_cluster_name`
+- **Required**
+Name for created custom workload cluster
+
+
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
@@ -45,15 +83,12 @@ module "rancher_server" {
 
 | Name | Version |
 |------|---------|
-| aws | n/a |
-| aws.r53 | n/a |
 | helm | 1.3.2 |
+| k8s | 0.8.2 |
 | local | 2.0.0 |
-| null | n/a |
-| rancher2 | 1.10.6 |
+| rancher2.admin | 1.10.6 |
 | rancher2.bootstrap | 1.10.6 |
 | rke | 1.1.6 |
-| tls | n/a |
 
 ## Modules
 
@@ -63,88 +98,37 @@ No Modules.
 
 | Name |
 |------|
-| [aws_ami](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) |
-| [aws_autoscaling_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) |
-| [aws_elb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/elb) |
-| [aws_iam_access_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_access_key) |
-| [aws_iam_user](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user) |
-| [aws_iam_user_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy) |
-| [aws_instance](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) |
-| [aws_instances](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/instances) |
-| [aws_key_pair](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/key_pair) |
-| [aws_launch_template](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) |
-| [aws_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) |
-| [aws_lb_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) |
-| [aws_lb_target_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) |
-| [aws_lb_target_group_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group_attachment) |
-| [aws_route53_record](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) |
-| [aws_route53_zone](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) |
-| [aws_s3_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) |
-| [aws_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) |
-| [aws_subnet_ids](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet_ids) |
-| [aws_vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) |
 | [helm_release](https://registry.terraform.io/providers/hashicorp/helm/1.3.2/docs/resources/release) |
-| [helm_repository](https://registry.terraform.io/providers/hashicorp/helm/1.3.2/docs/data-sources/repository) |
+| [k8s_manifest](https://registry.terraform.io/providers/banzaicloud/k8s/0.8.2/docs/resources/manifest) |
 | [local_file](https://registry.terraform.io/providers/hashicorp/local/2.0.0/docs/resources/file) |
-| [null_resource](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) |
-| [rancher2_auth_config_github](https://registry.terraform.io/providers/rancher/rancher2/1.10.6/docs/resources/auth_config_github) |
 | [rancher2_bootstrap](https://registry.terraform.io/providers/rancher/rancher2/1.10.6/docs/resources/bootstrap) |
-| [rancher2_user](https://registry.terraform.io/providers/rancher/rancher2/1.10.6/docs/data-sources/user) |
+| [rancher2_cluster](https://registry.terraform.io/providers/rancher/rancher2/1.10.6/docs/resources/cluster) |
 | [rke_cluster](https://registry.terraform.io/providers/rancher/rke/1.1.6/docs/resources/cluster) |
-| [tls_private_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| aws\_elb\_subnet\_ids | List of subnet ids in which to place the AWS ELB | `list(any)` | `[]` | no |
-| aws\_profile | n/a | `string` | `"rancher-eng"` | no |
-| aws\_region | n/a | `string` | `"us-west-2"` | no |
-| certmanager\_chart | Helm chart to use for cert-manager install | `string` | `"jetstack/cert-manager"` | no |
-| certmanager\_version | Version of cert-manager to install | `string` | `"0.10.0"` | no |
-| creds\_output\_path | Where to save the id\_rsa config file. Should end in a forward slash `/` . | `string` | `"./"` | no |
-| domain | n/a | `string` | `"eng.rancher.space"` | no |
-| extra\_ssh\_keys | Extra ssh keys to inject into Rancher instances | `list(any)` | `[]` | no |
-| github\_client\_id | GitHub client ID for Rancher to use, if using GH auth | `string` | `""` | no |
-| github\_client\_secret | GitHub client secret for Rancher to use, if using GH auth | `string` | `""` | no |
-| instance\_ssh\_user | Username for sshing into instances | `string` | `"ubuntu"` | no |
-| instance\_type | n/a | `string` | `"t3.large"` | no |
-| le\_email | LetsEncrypt email address to use | `string` | `"none@none.com"` | no |
-| master\_node\_count | Number of master nodes to launch | `number` | `3` | no |
-| name | Name for deployment | `string` | `"rancher-demo"` | no |
-| r53\_domain | DNS domain for Route53 zone (defaults to domain if unset) | `string` | `""` | no |
-| rancher2\_custom\_tags | Custom tags for Rancher resources | `map(any)` | <pre>{<br>  "DoNotDelete": "true",<br>  "Owner": "EIO_Demo"<br>}</pre> | no |
-| rancher2\_extra\_allowed\_gh\_principals | List of principals in form github\_user://IDNUM to be given Rancher access | `list(any)` | `[]` | no |
-| rancher2\_github\_auth\_enabled | Whether to use GitHub authentication for Rancher | `bool` | `false` | no |
-| rancher2\_github\_auth\_org | GitHub numerical ID of organization to grant Rancher access to | `string` | `"53273206"` | no |
-| rancher2\_github\_auth\_team | GitHub numerical ID of team to grant Rancher access to | `string` | `"3414845"` | no |
-| rancher2\_github\_auth\_user | GitHub numerical ID of user to grant Rancher access to | `string` | `"3430214"` | no |
-| rancher2\_master\_custom\_tags | Custom tags for Rancher master nodes | `map(any)` | `{}` | no |
-| rancher2\_master\_subnet\_ids | List of subnet ids for Rancher master nodes | `list(any)` | `[]` | no |
-| rancher2\_worker\_custom\_tags | Custom tags for Rancher worker nodes | `map(any)` | `{}` | no |
-| rancher2\_worker\_subnet\_ids | List of subnet ids for Rancher worker nodes | `list(any)` | `[]` | no |
-| rancher\_chart | Helm chart to use for Rancher install | `string` | `"rancher-stable/rancher"` | no |
-| rancher\_current\_password | Rancher admin user current password | `string` | `null` | no |
-| rancher\_nodes\_in\_asgs | Control whether to put Rancher nodes in ASGs | `bool` | `true` | no |
-| rancher\_password | Password to set for Rancher root user | `string` | n/a | yes |
-| rancher\_version | Version of Rancher to install | `string` | `"2.2.9"` | no |
-| rke\_backups\_region | Region to perform backups to S3 in. Defaults to aws\_region | `string` | `""` | no |
-| rke\_backups\_s3\_endpoint | Override for S3 endpoint to use for backups | `string` | `""` | no |
-| use\_default\_vpc | Should the default VPC for the region selected be used for Rancher | `bool` | `true` | no |
-| vpc\_id | If use\_default\_vpc is false, the vpc id that Rancher should use | `string` | `null` | no |
-| worker\_node\_count | Number of worker nodes to launch | `number` | `3` | no |
+| admin\_password | Admin password to use for Rancher server bootstrap | `string` | n/a | yes |
+| cert\_manager\_version | Version of cert-manager to install alongside Rancher (format: 0.0.0) | `string` | `"1.0.4"` | no |
+| node\_internal\_ip | Internal IP of compute node for Rancher cluster | `string` | `""` | no |
+| node\_public\_ip | Public IP of compute node for Rancher cluster | `string` | n/a | yes |
+| node\_username | Username used for SSH access to the Rancher server cluster node | `string` | n/a | yes |
+| rancher\_server\_dns | DNS host name of the Rancher server | `string` | n/a | yes |
+| rancher\_version | Rancher server version (format v0.0.0) | `string` | `"v2.5.3"` | no |
+| rke\_kubernetes\_version | Kubernetes version to use for Rancher server RKE cluster | `string` | `"v1.19.4-rancher1-1"` | no |
+| rke\_network\_options | Network options used for the custom workload cluster | `any` | `null` | no |
+| rke\_network\_plugin | Network plugin used for the custom workload cluster | `string` | `"canal"` | no |
+| ssh\_private\_key\_pem | Private key used for SSH access to the Rancher server cluster node | `string` | n/a | yes |
+| windows\_prefered\_cluster | Activate windows supports for the custom workload cluster | `bool` | `false` | no |
+| workload\_cluster\_name | Name for created custom workload cluster | `string` | n/a | yes |
+| workload\_kubernetes\_version | Kubernetes version to use for managed workload cluster | `string` | `"v1.18.12-rancher1-1"` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| etcd\_backup\_s3\_bucket\_id | S3 bucket ID for etcd backups |
-| etcd\_backup\_user\_key | AWS IAM access key id for etcd backup user |
-| etcd\_backup\_user\_secret | AWS IAM secret access key for etcd backup user |
-| master\_addresses | IP addresses of Rancher master nodes |
-| rancher\_admin\_password | Password set for Rancher local admin user |
-| rancher\_api\_url | FQDN of Rancher's Kubernetes API endpoint |
-| rancher\_token | Admin token for Rancher cluster use |
-| rancher\_url | URL at which to reach Rancher |
-| worker\_addresses | IP addresses of Rancher worker nodes |
+| custom\_cluster\_command | Docker command used to add a node to the quickstart cluster |
+| custom\_cluster\_windows\_command | Docker command used to add a windows node to the quickstart cluster |
+| rancher\_url | n/a |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
